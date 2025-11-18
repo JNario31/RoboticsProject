@@ -2,7 +2,8 @@ from kinova_gen3_interfaces.srv import Status, SetGripper, GetGripper, SetJoints
 import rclpy
 from rclpy.node import Node
 import time
-
+import cv2
+from inference_sdk import InferenceHTTPClient
 
 def do_home(node, home):
     z = Status.Request()
@@ -122,39 +123,59 @@ def place_block(node, set_tool, set_gripper, x, y, z, approach_height=15.0):
 
     return True
 
-def stack_blocks(node, set_tool, home, set_gripper):
+def stack_blocks(node, set_tool, home, set_gripper, coords):
 
-    # Pickup location configuration
-    pickup_x = 20.0
-    pickup_y = 20.0
-    pickup_z = 10.0
+    for coord in coords:
+        x = int(coord['x'])
+        y = int(coord['y'])
+        w = int(coord['width'])
+        h = int(coord['height'])
+        class_name = coord['class']
+        conf = coord['confidence']
+        print(x)
+        print(y)
+        print(class_name)
 
-    # Place location configuration
-    place_x = 30.0
-    place_y = 30.0
-    place_z = 10.0
 
-    # Block height
-    block_height = 5.0
+        # Pickup location configuration
+        pickup_x = x
+        pickup_y = y
+        pickup_z = 10.0
 
-    #Approach height
-    approach_height = 15.0
+        # Block height
+        block_height = 5.0
 
-    do_home(node, home)
-    time.sleep(1.5)
+        #Approach height
+        approach_height = 15.0
 
-    for i in range(3):
-
-        pick_block(node, set_tool, set_gripper, 
-                   pickup_x, pickup_y, pickup_z, 
-                   approach_height=approach_height)
-        
-        place_block(node, set_tool, set_gripper, 
-                    place_x, place_y, place_z + i * block_height, 
-                    approach_height=approach_height)
+        do_home(node, home)
         time.sleep(1.5)
-    do_home(node, home)
-    time.sleep(1.5)
+
+        for i in range(3):
+            pick_block(node, set_tool, set_gripper, 
+                    pickup_x, pickup_y, pickup_z, 
+                    approach_height=approach_height)
+            time.sleep(1.5)
+        
+        do_home(node, home)
+        time.sleep(1.5)
+
+def get_coords():
+    # -------- Inference --------
+    CLIENT = InferenceHTTPClient(
+        api_url="https://serverless.roboflow.com",
+        api_key="dOXf27URLjdeZMgyJ7en"
+    )
+
+    result = CLIENT.infer("test_image.jpg", model_id="cube-color-gzmh4/14")
+
+    # -------- Load image --------
+    img = cv2.imread("test_image.jpg")
+
+    # -------- Draw predictions --------
+    preds = result['predictions']
+
+    return preds
 
 def main():
     rclpy.init(args=None)
@@ -188,7 +209,10 @@ def main():
     while not home.wait_for_service(timeout_sec=1.0):
         node.get_logger().info('Waiting for home')
 
-    stack_blocks(node, set_tool, home, set_gripper)
+    coords = get_coords()
+
+
+    stack_blocks(node, set_tool, home, set_gripper, coords)
 
 if __name__ == '__main__':
     main()
