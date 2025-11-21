@@ -1,5 +1,13 @@
 import cv2
+import numpy as np
 from inference_sdk import InferenceHTTPClient
+from matrix_utils import compute_transformation, apply_transformation
+
+# --- CONSTANTS --- 
+# blue square has constant distance from base of kinova arm
+BLUE_SQUARE_XW = 0.075
+BLUE_SQUARE_YW = 0.265
+WORLD_POINTS = [[BLUE_SQUARE_XW, BLUE_SQUARE_YW]]
 
 # -------- Inference --------
 CLIENT = InferenceHTTPClient(
@@ -7,10 +15,10 @@ CLIENT = InferenceHTTPClient(
     api_key="dOXf27URLjdeZMgyJ7en"
 )
 
-result = CLIENT.infer("test_image.jpg", model_id="cube-color-gzmh4/14")
+result = CLIENT.infer("test_image_2.jpg", model_id="cube-color-gzmh4/14")
 
 # -------- Load image --------
-img = cv2.imread("test_image.jpg")
+img = cv2.imread("test_image_2.jpg")
 
 # -------- Draw predictions --------
 preds = result['predictions']
@@ -22,9 +30,10 @@ for pred in preds:
     h = int(pred['height'])
     class_name = pred['class']
     conf = pred['confidence']
-    print(x)
-    print(y)
-    print(class_name)
+    if(class_name == "blue"):
+        blue_square_xp = x
+        blue_square_yp = y
+        pixel_points = [[blue_square_xp, blue_square_yp]]
 
     # Convert from center-x/y to top-left corner
     x1 = int(x - w/2)
@@ -39,10 +48,29 @@ for pred in preds:
     label = f"{class_name} ({conf:.2f})"
     cv2.putText(img, label, (x1, y1-10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
+    
+# --- Compute transformation matrix ---
+print("Using blue square to compute transformation matrix...")
+matrix = compute_transformation(pixel_points, WORLD_POINTS)
+print("Matrix computed:")
+print(matrix)
+
+# --- Use transformation matrix to find real world coordinates of cubes ---
+for pred in preds:
+    xp = int(pred['x'])
+    yp = int(pred['y'])
+    class_name = pred['class']
+    conf = pred['confidence']
+    point = xp,yp
+    xw, yw = apply_transformation(matrix, point)
+    print("Real World Coordinates For " + class_name + " " + str(conf))
+    print("x = " + str(xw))
+    print("y = " + str(yw))
+
 
 # -------- Show or save --------
-cv2.imshow("Predictions", img)
-cv2.waitKey(0)
+#cv2.imshow("Predictions", img)
+#cv2.waitKey(0)
 
 # Optional: save output
 cv2.imwrite("output.jpg", img)
