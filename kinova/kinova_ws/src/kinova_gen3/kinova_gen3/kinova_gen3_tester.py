@@ -160,22 +160,6 @@ def stack_blocks(node, set_tool, home, set_gripper, coords):
         do_home(node, home)
         time.sleep(1.5)
 
-def get_coords():
-    # -------- Inference --------
-    CLIENT = InferenceHTTPClient(
-        api_url="https://serverless.roboflow.com",
-        api_key="dOXf27URLjdeZMgyJ7en"
-    )
-
-    result = CLIENT.infer("test_image.jpg", model_id="cube-color-gzmh4/14")
-
-    # -------- Load image --------
-    img = cv2.imread("test_image.jpg")
-
-    # -------- Draw predictions --------
-    preds = result['predictions']
-
-    return preds
 
 def main():
     rclpy.init(args=None)
