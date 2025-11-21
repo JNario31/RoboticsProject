@@ -4,6 +4,7 @@ from rclpy.node import Node
 import time
 import cv2
 from inference_sdk import InferenceHTTPClient
+from test import getCoords
 
 def do_home(node, home):
     z = Status.Request()
@@ -123,12 +124,12 @@ def place_block(node, set_tool, set_gripper, x, y, z, approach_height=15.0):
 
     return True
 
-def stack_blocks(node, set_tool, home, set_gripper):
+def stack_blocks(node, set_tool, home, set_gripper, n_blocks, coords):
 
         # Pickup location configuration
-        pickup_x = 5.0
-        pickup_y = 10.0
-        pickup_z = 10.0
+        pickup_x = coords[0][0]
+        pickup_y = coords[0][1]
+        pickup_z = 10
 
         # Block height
 
@@ -138,7 +139,7 @@ def stack_blocks(node, set_tool, home, set_gripper):
         do_home(node, home)
         time.sleep(1.5)
 
-        for i in range(3):
+        for i in range(n_blocks):
             pick_block(node, set_tool, set_gripper, 
                     pickup_x, pickup_y, pickup_z, 
                     approach_height=approach_height)
@@ -180,9 +181,13 @@ def main():
     while not home.wait_for_service(timeout_sec=1.0):
         node.get_logger().info('Waiting for home')
 
+    coords = node.create_client(getCoords, "/getCoords")
+    while not getCoords.wait_for_service(timeout_sec=1.0):
+        node.get_logger().info("Waiting for Coords")
 
 
-    stack_blocks(node, set_tool, home, set_gripper)
+
+    stack_blocks(node, set_tool, home, set_gripper, 3, coords)
 
 if __name__ == '__main__':
     main()
