@@ -193,7 +193,6 @@ def main():
     while not home.wait_for_service(timeout_sec=1.0):
         node.get_logger().info('Waiting for home')
 
-    coords = get_coords()
 
 
     stack_blocks(node, set_tool, home, set_gripper, coords)
