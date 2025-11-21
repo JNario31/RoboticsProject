@@ -181,9 +181,8 @@ def main():
     while not home.wait_for_service(timeout_sec=1.0):
         node.get_logger().info('Waiting for home')
 
-    coords = node.create_client(getCoords, "/getCoords")
-    while not getCoords.wait_for_service(timeout_sec=1.0):
-        node.get_logger().info("Waiting for Coords")
+    coords = getCoords()  # This returns the coordinate list directly
+    print(f"Got coordinates: {coords}")
 
 
 
