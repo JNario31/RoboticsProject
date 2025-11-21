@@ -123,19 +123,7 @@ def place_block(node, set_tool, set_gripper, x, y, z, approach_height=15.0):
 
     return True
 
-def stack_blocks(node, set_tool, home, set_gripper, coords):
-
-    for coord in coords:
-        x = int(coord['x'])
-        y = int(coord['y'])
-        w = int(coord['width'])
-        h = int(coord['height'])
-        class_name = coord['class']
-        conf = coord['confidence']
-        print(x)
-        print(y)
-        print(class_name)
-
+def stack_blocks(node, set_tool, home, set_gripper):
 
         # Pickup location configuration
         pickup_x = x
@@ -143,7 +131,6 @@ def stack_blocks(node, set_tool, home, set_gripper, coords):
         pickup_z = 10.0
 
         # Block height
-        block_height = 5.0
 
         #Approach height
         approach_height = 15.0
@@ -195,7 +182,7 @@ def main():
 
 
 
-    stack_blocks(node, set_tool, home, set_gripper, coords)
+    stack_blocks(node, set_tool, home, set_gripper)
 
 if __name__ == '__main__':
     main()
