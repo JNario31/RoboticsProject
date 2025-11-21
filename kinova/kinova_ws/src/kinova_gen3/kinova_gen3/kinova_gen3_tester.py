@@ -126,8 +126,8 @@ def place_block(node, set_tool, set_gripper, x, y, z, approach_height=15.0):
 def stack_blocks(node, set_tool, home, set_gripper):
 
         # Pickup location configuration
-        pickup_x = x
-        pickup_y = y
+        pickup_x = 5.0
+        pickup_y = 10.0
         pickup_z = 10.0
 
         # Block height
