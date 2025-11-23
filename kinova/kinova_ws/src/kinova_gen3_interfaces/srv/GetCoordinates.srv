@@ -1,0 +1,14 @@
+# GetCoordinates.srv
+# Service for requesting block coordinates from vision system
+
+# Request
+string image_path  # Optional: path to image file, empty string for live camera
+
+---
+
+# Response
+float64[] x_coords  # X coordinates in meters
+float64[] y_coords  # Y coordinates in meters
+int32 num_blocks    # Number of blocks detected
+bool success        # Whether detection was successful
+string message      # Status message
