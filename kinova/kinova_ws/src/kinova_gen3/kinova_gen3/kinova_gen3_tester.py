@@ -215,7 +215,7 @@ def main():
 
     coords = get_coordinates(node, coordinates)
 
-
+    print(f"Coordinates {coords}")
 
     stack_blocks(node, set_tool, home, set_gripper, 3, coords)
 
