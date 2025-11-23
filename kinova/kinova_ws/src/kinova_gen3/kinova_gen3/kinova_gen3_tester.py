@@ -1,10 +1,11 @@
-from kinova_gen3_interfaces.srv import Status, SetGripper, GetGripper, SetJoints, GetJoints, GetTool, SetTool
+from kinova_gen3_interfaces.srv import Status, SetGripper, GetGripper, SetJoints, GetJoints, GetTool, SetTool, GetCoordinates
 import rclpy
 from rclpy.node import Node
 import time
 import cv2
 from inference_sdk import InferenceHTTPClient
 from test import getCoords
+import json
 
 def do_home(node, home):
     z = Status.Request()
@@ -66,6 +67,33 @@ def do_set_joints(node, set_joints, v):
     rclpy.spin_until_future_complete(node, future)
     print(f"SetJoints returns {future.result()}")
     return future.result().status
+
+def get_coordinates(node, coordinates):
+    """
+    Call the vision service to get block coordinates
+    """
+    print("\n" + "="*60)
+    print("Requesting coordinates from vision system...")
+    print("="*60)
+    
+    request = GetCoordinates.Request()
+    future = coordinates.call_async(request)
+    rclpy.spin_until_future_complete(node, future)
+    
+    result = future.result()
+    
+    if result.success:
+        # Parse JSON coordinates from message
+        coords = json.loads(result.message)
+        print(f"✓ Received {len(coords)} coordinate points from vision system")
+        for i, coord in enumerate(coords):
+            print(f"  Point {i}: x={coord[0]:.3f}m, y={coord[1]:.3f}m")
+        print("="*60 + "\n")
+        return coords
+    else:
+        print("✗ Failed to get coordinates from vision system")
+        print("="*60 + "\n")
+        return []
 
 # For block stacking
 def pick_block(node, set_tool, set_gripper, x, y, z, approach_height):
@@ -181,8 +209,11 @@ def main():
     while not home.wait_for_service(timeout_sec=1.0):
         node.get_logger().info('Waiting for home')
 
-    coords = getCoords()  # This returns the coordinate list directly
-    print(f"Got coordinates: {coords}")
+    coordinates = node.create_client(GetCoordinates, "/get_coordinates")
+    while not coordinates.wait_for_service(timeout_sec=1.0):
+        node.get_logger().info('Waiting for vision coordinate service...')
+
+    coords = get_coordinates(node, coordinates)
 
 
 
